@@ -1,0 +1,31 @@
+div{
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+div#gamebox{
+    width: 100%;
+    height: 100%;
+}
+
+div.ball{
+    background: url('ball.png') no-repeat;
+    background-size: 100% 100%;
+    /*background: rgba(0,0,255,0.7);*/
+    width: 32px;
+    height: 32px;
+}
+div.spring{
+    width:16px;
+    background: url(spring.png) no-repeat;
+    background-size: 100% 100%;
+    z-index: -1;
+}
+
+div.spring_x{
+    width:16px;
+    background: url(spring_x.png) no-repeat;
+    background-size: 100% 100%;
+    z-index: -1;
+}
