@@ -1,8 +1,9 @@
 var goo = {
     url:  "ball.png",
     size: 32,
-    r: this.size / 2,
-    maxlen: 400,
+    r: 16,
+    maxlen: 200,
+    minlen: 30,
     maxlink: 2
 };
 
@@ -10,6 +11,8 @@ var spring = {
     url: "spring.png",
     width:32
 };
+
+var ground = 500;
 
 function sqr(x) { return x*x; }
 
@@ -30,7 +33,7 @@ function DomDiv(_class) {
 
 function Link(_ball1,_ball2,_class){
     this.node = [_ball1,_ball2];
-    this.len = dist(_ball1,_ball2);
+    this.len = Math.max(dist(_ball1,_ball2),goo.minlen);
     this.dom = new DomDiv(_class||"spring");
     this.dom.x=this;
     this.update = function(){
@@ -72,6 +75,7 @@ function Ball(_x,_y,_state,_link){
     this.__defineGetter__("location",function(){return this._location;});
 
     this.location = {"x":_x || 0, "y": _y || 0};
+    this.speed = {"x":0,"y":0};
     this.state =_state || "fixed";
     this.link = _link || [];
     this.connect = function(_ball1,_ball2){
@@ -99,14 +103,12 @@ var balls = [];
 var links = [];
 
 function init() {
-    balls.push(new Ball(100, 100, "fixed"));
-    balls.push(new Ball(100, 400, "fixed"));
-    balls.push(new Ball(360, 250, "fixed"));
+    balls.push(new Ball(200, 200, "fixed"));
+    balls.push(new Ball(200, 400, "fixed"));
+    balls.push(new Ball(373, 250, "fixed"));
 
-    for (var x = 0; x < 20; ++x) {
-
-        balls.push(new Ball(400+x*20, 400+x*20, "active"));
-
+    for (var x = 0; x < 50; ++x) {
+        balls.push(new Ball(600+x*20, 600+x*20, "active"));
     }
 
     balls[0].connect(balls[1]);
@@ -189,10 +191,60 @@ $("#gamebox").on("mouseup",function(e) {
             }
             now_select.state = "fixed";
         }
+    } else {
+        now_select.state = "active";
     }
 
     now_select = null;
 });
 
+var inertia = 0.8;
+var MAXSPEED = 100;
+
+function physics(){
+    for (var x in balls){
+        if (balls[x]!=now_select){
+        var tmp = balls[x];
+        var loc = tmp.location;
+        tmp.speed.x= Math.max(Math.min(tmp.speed.x,MAXSPEED),-MAXSPEED);
+        tmp.speed.y= Math.max(Math.min(tmp.speed.y,MAXSPEED),-MAXSPEED);
+        if (tmp.location.y == ground+goo.r && sqr(tmp.speed.x) + sqr(tmp.speed.y) < 10000){
+            tmp.speed.x=0;
+            tmp.speed.y=0;
+        }
+        tmp.location = {"x":loc.x+tmp.speed.x,
+                      "y":Math.min(loc.y + tmp.speed.y , ground+goo.r)};
+    }}
+
+    for (var x=0;x<balls.length;++x) {
+
+        var tmp1 = balls[x];
+        tmp1.speed.x *= inertia;
+        tmp1.speed.y *= inertia;
+        tmp1.speed.y += 3;
+         if (balls[x].state == "fixed") {
+             for (var y in tmp1.link) {
+                var tmp2 = tmp1.link[y].node[0];
+                if (tmp2 == tmp1){
+                    tmp2 = tmp1.link[y].node[1];
+                }
+                var d = dist(tmp1, tmp2);
+                var dx = tmp2.location.x - tmp1.location.x;
+                var dy = tmp2.location.y - tmp1.location.y;
+                var v = 0;
+                if (d < 2 * goo.r) {
+                    v = (2 * goo.r - d) / d;
+                }
+                var tmplink = tmp1.hasLinkto(tmp2);
+                if (tmplink) {
+                    v -= 0.5 * (d - tmplink.len) / tmplink.len;
+                }
+                tmp1.speed.x -= dx * v;
+                tmp1.speed.y -= dy * v;
+            }
+        }
+    }
+}
 
 init();
+setInterval(physics,30);

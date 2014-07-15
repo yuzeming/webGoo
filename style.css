@@ -5,8 +5,13 @@ div{
 }
 
 div#gamebox{
-    width: 100%;
-    height: 100%;
+    width: 3000px;
+    height: 3000px;
+}
+
+body{
+    /*-webkit-transform:rotateX(180deg);*/
+    /*overflow: scroll;*/
 }
 
 div.ball{
