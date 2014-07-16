@@ -1,5 +1,5 @@
 div{
-    position: fixed;
+    position:absolute;
     top: 0;
     left: 0;
 }
@@ -9,9 +9,14 @@ div#gamebox{
     height: 3000px;
 }
 
+div#max_height{
+    position: fixed;
+    top:0;
+    left:0;
+}
+
 body{
-    /*-webkit-transform:rotateX(180deg);*/
-    /*overflow: scroll;*/
+    /*overflow:hidden;*/
 }
 
 div.ball{
@@ -21,6 +26,12 @@ div.ball{
     width: 32px;
     height: 32px;
 }
+
+div.ball:hover{
+    background: url('ball_hover.png') no-repeat;
+    background-size: 100% 100%;
+}
+
 div.spring{
     width:16px;
     background: url(spring.png) no-repeat;
@@ -33,4 +44,101 @@ div.spring_x{
     background: url(spring_x.png) no-repeat;
     background-size: 100% 100%;
     z-index: -1;
+}
+
+div#ground{
+    top: 2999px;
+    width: 3000px;
+    height: 120px;
+    background: url(img/groundTile_before.png) repeat-x;
+    z-index: 99;
+}
+
+div#bg1{
+    width: 3000px;
+    height: 500px;
+    top:2500px;
+    background: url(img/haze.png) repeat-x;
+    background-size:  auto 100%;
+    z-index: -10;
+}
+
+div#bg2{
+    position: fixed;
+    width: 2000px;
+    height: 550px;
+    top:20%;
+    z-index: -10;
+}
+
+div#bg2_img{
+    width: 100%;
+    height: 150px;
+    background: url(img/DistantBuildings1.png) repeat-x;
+    background-size:  auto 100%;
+}
+
+div#bg2_bk {
+    width: 100%;
+    height: 400px;
+    top:150px;
+    background: black;
+}
+
+div#bg3{
+    position: fixed;
+    width: 2000px;
+    height: 200px;
+    top:8%;
+    background: url(img/DistantBuildings2.png) repeat-x;
+    background-size:  auto 100%;
+    z-index: -10;
+}
+
+#reset{
+    width: 152px;
+    height: 74px;
+    top:3021px;
+    left: 1700px;
+    background: url(img/nukem_bg.png);
+    z-index: 100;
+}
+
+#button{
+    width: 60px;
+    height: 60px;
+    top: 7px;
+    left: 7px;
+    background: url(img/button_up.png);
+    z-index: 101;
+}
+
+#button:hover{
+     background: url(img/button_over.png);
+}
+
+#coverClose{
+    width: 60px;
+    height: 60px;
+    top: 7px;
+    left: 7px;
+    background: url(img/coverClosed_up.png);
+    z-index: 102;
+}
+#coverClose:hover{
+    background: url(img/coverClosed_over.png);
+}
+
+#coverOpen{
+    width: 60px;
+    height: 60px;
+    top: 7px;
+    left: -55px;
+    background: url(img/coverOpen_up.png);
+    z-index: 102;
+    display: none;
+}
+
+#coverOpen:hover{
+    background: url(img/coverOpen_over.png);
 }
