@@ -101,9 +101,11 @@ function Ball(_x,_y,_state,_link){
 
     this.walk = function(){
         if (this.state=="active" && this.location.y == ground &&(Math.random()<0.1||this.speed.x==0)){
-           this.speed.x = Math.random()*4-2;
+           this.speed.x =(Math.random ()*3+1) * ((1500 - this.location.x)>0?1:-1);
         }
     };
+
+    this.stop = false;
 
 }
 
@@ -119,7 +121,7 @@ function init() {
     balls.push(new Ball(1400, 3000, "fixed"));
     balls.push(new Ball(1600, 3000, "fixed"));
 
-    for (var x = 0; x < 50; ++x) {
+    for (var x = 0; x < 20; ++x) {
         balls.push(new Ball(600+x*40, 2600, "active"));
     }
 
@@ -196,34 +198,55 @@ $("#gamebox").on("mousemove",function(e) {
     }
 });
 
+var disable_mouseover = false;
+
 $("#gamebox").on("mouseup",function(e) {
 
-    if (now_select && tmp_links.length == 2){
-        $("div.spring_x").remove();
-        if (tmp_links.beLink){
-            tmp_links[0].connect(tmp_links[1]);
-            now_select.state = "hide";
-        } else {
-            for (var x = 0; x < tmp_links.length; ++x) {
-                now_select.connect(tmp_links[x]);
+    if (now_select){
+        if (tmp_links.length == 2) {
+            $("div.spring_x").remove();
+            if (tmp_links.beLink) {
+                tmp_links[0].connect(tmp_links[1]);
+                now_select.state = "hide";
+
+            } else {
+                for (var x = 0; x < tmp_links.length; ++x) {
+                    now_select.connect(tmp_links[x]);
+                }
+                now_select.state = "fixed";
+
             }
-            now_select.state = "fixed";
-        }
-    } else {
-        if (now_select) {
+        } else {
             now_select.state = "active";
+
         }
     }
-
+    now_select.stop = false;
+    now_select.dom.classList.remove("hover");
     now_select = null;
+    disable_mouseover = true;
+
+    setTimeout(function(){disable_mouseover = false},200);
 });
 
 $("#gamebox").on("mouseout",function(){
    mouse_pos = null;
 });
 
-$("#gamebox").on("mouseout",function(){
-   mouse_pos = null;
+$("#gamebox").on("mouseover","div.ball",function(){
+    if (disable_mouseover) return ;
+    var b = this.x;
+    if (b.state !="fixed") {
+        b.stop = true;
+        this.classList.add("hover");
+    }
+});
+
+$("#gamebox").on("mouseout","div.ball",function(){
+    var b = this.x;
+    b.stop = false;
+    this.classList.remove("hover");
+
 });
 
 var inertia = 0.6;
@@ -242,7 +265,7 @@ function physics(){
     max_height = 0;
     center_x = 0;center_y=0;center_tmp=0;
     for (var x in balls){
-        if (balls[x]!=now_select){
+        if (balls[x]!=now_select && !balls[x].stop){
             var tmp = balls[x];
             var loc = tmp.location;
             if (tmp.state == "fixed") {
@@ -278,15 +301,14 @@ function physics(){
 
     for (var x=0;x<balls.length;++x) {
         var tmp1 = balls[x];
-        tmp1.speed.y += 5;
+        if (tmp1.stop) {continue;}
          if (tmp1.state == "fixed") {
              for (var y in tmp1.link) {
                 var tmp2 = tmp1.link[y].node[0];
                 if (tmp2 == tmp1){
                     tmp2 = tmp1.link[y].node[1];
                 }
-                tmp1.speed.x *= inertia;
-                tmp1.speed.y *= inertia;
+
                 var d = dist(tmp1, tmp2);
                 var dx = tmp2.location.x - tmp1.location.x;
                 var dy = tmp2.location.y - tmp1.location.y;
@@ -297,7 +319,11 @@ function physics(){
                 }
                 tmp1.speed.x -= dx * v;
                 tmp1.speed.y -= dy * v;
+
             }
+            tmp1.speed.x *= inertia;
+            tmp1.speed.y *= inertia;
+            tmp1.speed.y += 5;
         }
         if (tmp1.state == "active"){
             for (var y=0;y<balls.length;++y){
@@ -312,8 +338,10 @@ function physics(){
                     }
                     tmp1.speed.x -= dx * v;
                     tmp1.speed.y -= dy * v;
+
                 }
             }
+
             if (tmp1.location.y == ground){
                 for (var y=0;y<links.length;++y){
                     if (Math.abs(dist(tmp1,links[y].node[0]) + dist(tmp1,links[y].node[1]) -dist(links[y].node[0],links[y].node[1])) < 10){
@@ -326,6 +354,7 @@ function physics(){
                     }
                 }
             }
+            tmp1.speed.y += 0.1;
         }
         if (tmp1.state == "onspring"){
             tmp1.k += tmp1.fx;
@@ -336,6 +365,12 @@ function physics(){
             }
         }
     }
+
+    if (now_select){
+        now_select.speed.x = 0;
+        now_select.speed.y = 0.5;
+    }
+
 }
 
 function randSelectLink(fnode,wnode){

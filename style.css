@@ -27,9 +27,10 @@ div.ball{
     height: 32px;
 }
 
-div.ball:hover{
+div.hover{
     background: url('ball_hover.png') no-repeat;
     background-size: 100% 100%;
+    z-index: 9999;
 }
 
 div.spring{
