@@ -11,8 +11,8 @@ div#gamebox{
 
 div#max_height{
     position: fixed;
-    top:0;
-    left:0;
+    top:20px;
+    left:50px;
 }
 
 body{
@@ -47,7 +47,7 @@ div.spring_x{
 }
 
 div#ground{
-    top: 2999px;
+    top: 3015px;
     width: 3000px;
     height: 120px;
     background: url(img/groundTile_before.png) repeat-x;
@@ -89,7 +89,7 @@ div#bg3{
     position: fixed;
     width: 2000px;
     height: 200px;
-    top:8%;
+    top:7%;
     background: url(img/DistantBuildings2.png) repeat-x;
     background-size:  auto 100%;
     z-index: -10;

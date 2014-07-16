@@ -100,10 +100,8 @@ function Ball(_x,_y,_state,_link){
     };
 
     this.walk = function(){
-        if (this.state=="active" && this.location.y == ground-goo.r){
-           if (Math.random() <0.01){
-               this.speed.x = Math.random()*10-5;
-           }
+        if (this.state=="active" && this.location.y == ground &&(Math.random()<0.1||this.speed.x==0)){
+           this.speed.x = Math.random()*4-2;
         }
     };
 
@@ -117,13 +115,15 @@ function init() {
     $("div.spring").remove();
     balls = [];
     links = [];
-    balls.push(new Ball(1500+200, 2200, "fixed"));
-    balls.push(new Ball(1500+200, 2400, "fixed"));
-    balls.push(new Ball(1500+373, 2250, "fixed"));
+    balls.push(new Ball(1500, 2826.8, "fixed"));
+    balls.push(new Ball(1400, 3000, "fixed"));
+    balls.push(new Ball(1600, 3000, "fixed"));
 
     for (var x = 0; x < 50; ++x) {
         balls.push(new Ball(600+x*40, 2600, "active"));
     }
+
+    //balls.push(new Ball(1500,2600,"active"));
 
     balls[0].connect(balls[1]);
     balls[1].connect(balls[2]);
@@ -181,7 +181,7 @@ function showCanLink( b ) {
 var now_select = null;
 
 $("#gamebox").on("mousedown","div.ball",null,function(e) {
-    if (this.x.state == "active") {
+    if (this.x.state != "fixed") {
         now_select = this.x;
     }
 });
@@ -222,6 +222,10 @@ $("#gamebox").on("mouseout",function(){
    mouse_pos = null;
 });
 
+$("#gamebox").on("mouseout",function(){
+   mouse_pos = null;
+});
+
 var inertia = 0.6;
 
 var max_height = 0;
@@ -230,7 +234,9 @@ var center_x = 0;
 var center_y = 0;
 var center_tmp = 0;
 
-var MAXSPEED = 2;
+var MAXSPEED = 1;
+
+var walk_speed = 2;
 
 function physics(){
     max_height = 0;
@@ -240,29 +246,38 @@ function physics(){
             var tmp = balls[x];
             var loc = tmp.location;
             if (tmp.state == "fixed") {
+                if (tmp.location.y == ground && sqr(tmp.speed.x) + sqr(tmp.speed.y) <= 610){
+                    tmp.speed.x=0;
+                    tmp.speed.y=0;
+                }
                 tmp.speed.x = Math.max(Math.min(tmp.speed.x, MAXSPEED), -MAXSPEED);
                 tmp.speed.y = Math.max(Math.min(tmp.speed.y, MAXSPEED), -MAXSPEED);
 
                 if (Math.abs(tmp.speed.y)<0.3) tmp.speed.y=0;
                 if (Math.abs(tmp.speed.x)<0.3) tmp.speed.x=0;
+                tmp.location = {"x":loc.x+tmp.speed.x,
+                          "y":Math.min(loc.y + tmp.speed.y , ground)};
+            }
 
+            if (tmp.state == "onspring"){
+                var dx = tmp.spring.node[1].location.x - tmp.spring.node[0].location.x;
+                var dy = tmp.spring.node[1].location.y - tmp.spring.node[0].location.y;
+                loc.x = tmp.spring.node[0].location.x + dx * tmp.k;
+                loc.y = tmp.spring.node[0].location.y + dy * tmp.k;
+                tmp.location = loc;
             }
-            if (tmp.state == "fixed" && tmp.location.y == ground-goo.r && sqr(tmp.speed.x) + sqr(tmp.speed.y) <= 610){
-                tmp.speed.x=0;
-                tmp.speed.y=0;
+
+            if (tmp.state == "active"){
+                tmp.location = {"x":loc.x+tmp.speed.x,
+                          "y":Math.min(loc.y + tmp.speed.y , ground)};
             }
-            tmp.walk();
-            tmp.location = {"x":loc.x+tmp.speed.x,
-                          "y":Math.min(loc.y + tmp.speed.y , ground-goo.r)};
         max_height=Math.max(max_height, (ground-tmp.location.y));
-    }}
-    $("#max_height").html ( "当前高度:" + Math.round(max_height) / 100);
+         }
+    }
+    $("#max_height").html ( "当前高度:<b>" + Math.round(max_height/10) / 10) +"米</b>";
 
     for (var x=0;x<balls.length;++x) {
-
         var tmp1 = balls[x];
-        tmp1.speed.x *= inertia;
-        tmp1.speed.y *= inertia;
         tmp1.speed.y += 5;
          if (tmp1.state == "fixed") {
              for (var y in tmp1.link) {
@@ -270,21 +285,23 @@ function physics(){
                 if (tmp2 == tmp1){
                     tmp2 = tmp1.link[y].node[1];
                 }
+                tmp1.speed.x *= inertia;
+                tmp1.speed.y *= inertia;
                 var d = dist(tmp1, tmp2);
                 var dx = tmp2.location.x - tmp1.location.x;
                 var dy = tmp2.location.y - tmp1.location.y;
                 var v = 0;
                 var tmplink = tmp1.hasLinkto(tmp2);
                 if (tmplink) {
-                        v -= 2 * (d - tmplink.len) / tmplink.len;
+                        v -= 1.7 * (d - tmplink.len) / tmplink.len;
                 }
                 tmp1.speed.x -= dx * v;
                 tmp1.speed.y -= dy * v;
             }
         }
         if (tmp1.state == "active"){
-            for (var y=1;y<balls.length;++y){
-                if (x!=y){
+            for (var y=0;y<balls.length;++y){
+                if (x!=y&&balls[y].state == "active"){
                     var tmp2 = balls[y];
                     var d = dist(tmp1, tmp2);
                     var dx = tmp2.location.x - tmp1.location.x;
@@ -297,7 +314,40 @@ function physics(){
                     tmp1.speed.y -= dy * v;
                 }
             }
+            if (tmp1.location.y == ground){
+                for (var y=0;y<links.length;++y){
+                    if (Math.abs(dist(tmp1,links[y].node[0]) + dist(tmp1,links[y].node[1]) -dist(links[y].node[0],links[y].node[1])) < 10){
+                        var len = dist(links[y].node[0],links[y].node[1]);
+                        tmp1.state = "onspring";
+                        tmp1.spring = links[y];
+                        tmp1.fx =  walk_speed / len * (Math.random() <0.5 ? 1:-1);
+                        tmp1.k = dist(tmp1,links[y].node[0]) / len;
+                        break;
+                    }
+                }
+            }
         }
+        if (tmp1.state == "onspring"){
+            tmp1.k += tmp1.fx;
+            if (tmp1.k<=0){
+                randSelectLink(tmp1.spring.node[0],tmp1);
+            } else if (tmp1.k>=1) {
+                randSelectLink(tmp1.spring.node[1],tmp1);
+            }
+        }
+    }
+}
+
+function randSelectLink(fnode,wnode){
+    var link = fnode.link[Math.floor(Math.random()*fnode.link.length)];
+    wnode.spring = link;
+    var len = dist(link.node[0],link.node[1]);
+    if (link.node[0] == fnode){
+        wnode.fx =  walk_speed / len;
+        wnode.k = 0.01;
+    } else {
+        wnode.fx = -walk_speed / len;
+        wnode.k = 0.99;
     }
 }
 
@@ -329,9 +379,16 @@ window.onscroll = function(){
     bg3.style["-webkit-transform"] = "translate("+ - _x / 3+"px,"+  (3000-_y) / 3+"px)";
 };
 
+function makeBallJump() {
+    for (var x=0;x<balls.length;++x){
+        balls[x].walk();
+    }
+}
+
 init();
 setInterval(physics,20);
 setInterval(autoscroll,20);
+setInterval(makeBallJump,1000);
 
 $("#coverClose").on("click",function(){
     $("#coverClose").hide();
@@ -347,4 +404,4 @@ $("#coverOpen").on("click",function(){
 $("#button").on("click",function(){
     $("#coverOpen").click();
     init();
-})
+});
